@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Transporte Rural - Ruta Huayruropata &bull; Terminal &bull; Izcuchaca &bull; Anta</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS & JS for GPS Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dark: {
+                            800: '#111827',
+                            850: '#0f172a',
+                            900: '#0b1120',
+                            950: '#030712',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 8pt !important;
+                margin: 0 !important;
+                padding: 10px !important;
+            }
+            .print-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #111 !important;
+                padding: 4px 6px !important;
+                color: #000 !important;
+                font-size: 8.5pt !important;
+                background: transparent !important;
+            }
+            .print-header { display: block !important; }
+        }
+        @keyframes master-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .btn-empezar-glow {
+            animation: master-pulse 2s infinite;
+        }
+        .neon-clock {
+            text-shadow: 0 0 25px rgba(52, 211, 153, 0.45);
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #0b1120 !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8) !important;
+            border-radius: 14px !important;
+        }
+        .leaflet-popup-content {
+            margin: 10px 12px !important;
+            line-height: 1.4 !important;
+        }
+        .leaflet-container {
+            font-family: 'Inter', sans-serif !important;
+            background-color: #070d18 !important;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #070d18; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen font-sans antialiased flex flex-col justify-between selection:bg-emerald-500 selection:text-dark-950">
+
+    <header class="border-b border-slate-800 bg-dark-900/90 sticky top-0 z-40 no-print backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-400/40">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-2">
+                        GPS Transporte Rural &bull; Huayruropata &rarr; Izcuchaca &rarr; Anta
+                        <span class="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Circuito 63 min
+                        </span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">
+                        Huayruropata (0m) &rarr; Base 8 Terminal Santiago (+8m) &rarr; Arco Poroy (+12m) &rarr; Cachimayo (+6m) &rarr; Izcuchaca (+19m) &rarr; Anta (+18m)
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- GPS Quick Toggle / Status -->
+                <button onclick="scrollToGpsMap()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs font-bold rounded-xl border border-emerald-700/50 transition flex items-center gap-1.5 shadow-sm" title="Ver Radar GPS en Vivo">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="hidden sm:inline">Radar GPS</span>
+                    <span id="headerGpsCount" class="font-mono bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] text-emerald-200 border border-emerald-500/30">0 en ruta</span>
+                </button>
+                <!-- 12H vs 24H Quick Switcher -->
+                <div class="flex items-center bg-dark-950 border border-slate-700 rounded-xl p-1 shadow-inner">
+                    <button id="toggle12H" onclick="setTimeFormat('12H')" class="px-3 py-1 text-xs font-bold rounded-lg transition bg-blue-600 text-white shadow">
+                        12 Horas (AM/PM)
+                    </button>
+                    <button id="toggle24H" onclick="setTimeFormat('24H')" class="px-3 py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white">
+                        24 Horas
+                    </button>
+                </div>
+
+                <button onclick="toggleConfigModal(true)" class="p-2 sm:px-3 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Personalizar nombres de paraderos">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="hidden sm:inline">Paraderos</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4 flex-1 w-full">
+
+        <!-- Print-only header -->
+        <div class="hidden print-header border-b-2 border-black pb-2 mb-3 text-black">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-black uppercase tracking-wider">Planilla de Control y Salida - Transporte Público Rural</h2>
+                    <p class="text-xs text-gray-700">Ruta: Huayruropata (Base) &bull; Base 8 Terminal Santiago (+8m) &bull; Arco Poroy (+12m) &bull; Cachimayo (+6m) &bull; Izcuchaca (+19m) &bull; Terminal Anta (+18m) | Total: 63 min</p>
+                </div>
+                <div class="text-right text-xs">
+                    <p><strong>Formato:</strong> <span id="printModeLabel">12 Horas (AM/PM)</span></p>
+                    <p><strong>Impreso:</strong> <span id="printDateStamp">--</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification Popover -->
+        <div id="toast" class="hidden fixed bottom-6 right-6 z-50 bg-dark-900 border border-slate-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300">
+            <div id="toastIcon" class="text-emerald-400"></div>
+            <span id="toastMsg" class="text-xs sm:text-sm font-semibold">Mensaje</span>
+        </div>
+
+        <!-- HORA ACTUAL EN VIVO: MASTER DISPLAY & BOTÓN EMPEZAR SALIDA YA -->
+        <section class="bg-gradient-to-br from-dark-900 via-dark-850 to-dark-950 border-2 border-emerald-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl shadow-black/60 no-print">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                
+                <!-- HORA ACTUAL DESTACADA (ENORME Y EN VIVO) -->
+                <div class="lg:col-span-6 bg-dark-950/90 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-inner relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-400">
+                                HORA ACTUAL DEL SISTEMA (EN VIVO)
+                            </span>
+                        </div>
+                        <span id="currentFormatBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                            MODO: 12H (AM/PM)
+                        </span>
+                    </div>
+
+                    <!-- Master Clock Digits -->
+                    <div class="flex items-baseline gap-2 py-1">
+                        <div id="liveClockDigits" class="font-mono text-3xl sm:text-5xl md:text-6xl font-black text-emerald-400 tracking-wider neon-clock">
+                            --:--
+                        </div>
+                        <div class="flex flex-col">
+                            <span id="liveClockSeconds" class="font-mono text-xl sm:text-2xl font-black text-emerald-200">
+                                :--
+                            </span>
+                            <span id="liveClockPeriod" class="font-mono text-sm sm:text-base font-extrabold text-amber-400">
+                                --
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Live Date Display -->
+                    <div id="liveDateDescription" class="text-xs sm:text-sm text-slate-400 font-medium capitalize mt-1 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Cargando fecha y hora del sistema...</span>
+                    </div>
+                </div>
+
+                <!-- DISPATCH CONTROLS & BOTÓN EMPEZAR -->
+                <div class="lg:col-span-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="w-full sm:w-auto space-y-2 flex-1">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-300">N° Móvil / Padrón:</label>
+                            <input type="text" id="quickUnitNum" value="01" class="w-20 bg-dark-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-center font-mono font-black text-base text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Presiona el botón para tomar la hora del segundo exacto y proyectar los 5 paraderos en ruta (+8m, +12m, +6m, +19m, +18m).
+                        </div>
+                    </div>
+
+                    <!-- BIG START BUTTON & REINICIAR DESDE HORA ACTUAL -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+                        <button id="btnEmpezarSalida" onclick="empezarSalidaAhora()" title="Despachar el móvil indicado con la hora actual exacta del sistema" class="btn-empezar-glow px-6 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 active:scale-95 text-dark-950 font-black text-sm sm:text-base rounded-2xl shadow-xl shadow-emerald-500/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer">
+                            <svg class="w-6 h-6 fill-current" viewBox="0 0 20 20">
+                                <path d="M4.5 3a1.5 1.5 0 00-1.5 1.5v11A1.5 1.5 0 004.5 17h1.086a1.5 1.5 0 001.06-.44l6.5-6.5a1.5 1.5 0 000-2.12l-6.5-6.5A1.5 1.5 0 005.586 3H4.5zM14 4a1 1 0 00-1 1v10a1 1 0 102 0V5a1 1 0 00-1-1z" />
+                            </svg>
+                            <span>🚀 INICIAR / SALIDA YA</span>
+                        </button>
+                        <button id="btnReiniciarJornada" onclick="iniciarHorariosDesdeHoraActual()" title="Iniciar la planilla de nuevo: Móvil 01 a la hora actual y los demás según frecuencia" class="px-5 py-4 sm:py-5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 border border-blue-400/40 cursor-pointer">
+                            <svg class="w-5 h-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>🔄 Iniciar Jornada Ahora</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 no-print">
+            
+            <!-- Manual Entry -->
+            <section class="lg:col-span-7 bg-dark-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-800">
+                    <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Registro Manual de Salida
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-mono">12H / 24H Dinámico</span>
+                </div>
+
+                <form id="singleForm" onsubmit="handleSingleSubmit(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">N° Móvil</label>
+                        <input type="text" id="unitInput" required placeholder="01" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono">
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Placa</label>
+                        <input type="text" id="plateInput" placeholder="V7X-841" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase font-mono">
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Conductor</label>
+                        <input type="text" id="driverInput" placeholder="Nombre de chofer" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div class="sm:col-span-4">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Correo para Rastreo</label>
+                        <input type="email" id="emailInput" placeholder="chofer01@gmail.com" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono text-xs">
+                    </div>
+
+                    <div class="sm:col-span-7">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Hora de Salida Base</label>
+                        <div class="flex items-center gap-2">
+                            <input type="time" id="departureTime" required class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+                            <button type="button" onclick="setSystemTimeToInput()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition whitespace-nowrap">
+                                Hora Actual
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sm:col-span-5 flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-xs sm:text-sm py-2 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            </svg>
+                            Agregar a Planilla
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Batch Frequency Generator -->
+            <section class="lg:col-span-5 bg-dark-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-800">
+                    <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Generar Frecuencias en Lote
+                    </h3>
+                    <span class="text-[10px] text-slate-400 font-mono">Intervalo automático</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[11px] font-semibold text-slate-400">Hora Inicio</label>
+                            <button type="button" onclick="setBatchStartTimeToNow()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline transition" title="Poner hora actual del sistema">
+                                Hora Actual
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <input type="time" id="batchStartTime" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-2.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+                            <button type="button" onclick="setBatchStartTimeToNow()" title="Tomar hora actual del sistema" class="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl border border-slate-700 transition shrink-0">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Frecuencia</label>
+                        <div class="relative">
+                            <input type="number" id="batchInterval" value="8" min="1" max="120" class="w-full bg-dark-950 border border-slate-700 rounded-xl pl-2.5 pr-6 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+                            <span class="absolute right-2 top-2 text-slate-500 text-xs">m</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Cantidad</label>
+                        <input type="number" id="batchCount" value="6" min="1" max="50" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-2.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+                    </div>
+
+                    <div class="col-span-3 pt-1">
+                        <button onclick="generateBatchFleet()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Generar Flota en Serie
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SECCIÓN RADAR GPS EN VIVO: RUTA HUAYRUROPATA - TERMINAL - IZCUCHACA - ANTA -->
+        <section id="gpsMapSection" class="bg-gradient-to-br from-dark-900 via-dark-850 to-dark-950 border border-emerald-500/30 rounded-3xl p-4 sm:p-5 shadow-2xl shadow-black/80 no-print transition-all">
+            <!-- Map Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                        <svg class="w-5 h-5 animate-spin" style="animation-duration: 10s;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-2">
+                                🛰️ Radar GPS Satelital &bull; Transporte Público Rural
+                            </h2>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                GPS 4G ACTIVO (3m)
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5 flex-wrap">
+                            <span>Ruta Oficial:</span>
+                            <strong class="text-emerald-400 font-semibold">Huayruropata (Cusco)</strong> &rarr;
+                            <span class="text-slate-300">Base 8 Terminal Santiago (+8m)</span> &rarr;
+                            <span class="text-slate-300">Arco Poroy</span> &rarr;
+                            <span class="text-slate-300">Cachimayo</span> &rarr;
+                            <strong class="text-cyan-400 font-semibold">Izcuchaca</strong> &rarr;
+                            <strong class="text-amber-400 font-semibold">Terminal Anta</strong>
+                            <span class="text-slate-500 font-mono">(42 km &bull; 63 min)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center flex-wrap gap-2">
+                    <!-- Centrar Flota -->
+                    <button onclick="centerMapOnFleet()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Centrar Flota
+                    </button>
+                    <!-- Mi Ubicacion GPS -->
+                    <button onclick="locateUserPosition()" class="px-3 py-1.5 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 text-xs font-semibold rounded-xl border border-emerald-700/50 transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        Mi GPS
+                    </button>
+                    <!-- Capa de Mapa -->
+                    <button onclick="toggleMapLayer()" id="btnLayerToggle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Cambiar vista de mapa">
+                        🗺️ Modo Oscuro
+                    </button>
+                    <!-- Expandir / Colapsar -->
+                    <button onclick="toggleGpsMapCollapse()" id="btnCollapseMap" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition" title="Plegar / Desplegar">
+                        ▼
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map & Live Telemetry Panel -->
+            <div id="gpsMapContent" class="space-y-3">
+                <!-- Barra de Rastreo y Notificaciones por Correo -->
+                <div class="bg-dark-950/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shadow-inner">
+                    <div class="flex-1 flex items-center gap-2 bg-dark-900 border border-slate-700/80 rounded-xl px-3 py-2 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/30 transition">
+                        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <input type="email" id="gpsTrackEmailInput" list="emailListDatalist" onkeydown="if(event.key==='Enter') trackVehicleByEmail()" placeholder="Ingresa correo para rastrear móvil o chofer (ej. victor.quispe@transporteanta.pe)..." class="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none font-mono">
+                        <datalist id="emailListDatalist"></datalist>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                        <button onclick="trackVehicleByEmail()" class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span>Rastrear por Correo</span>
+                        </button>
+                        <button onclick="openEmailNotificationModal()" class="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600/90 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-xl border border-blue-400/30 shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            <span>Enviar Enlace por Correo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Leaflet Map Container -->
+                <div class="relative w-full h-[320px] sm:h-[400px] md:h-[450px] rounded-2xl overflow-hidden border border-slate-800 shadow-inner bg-dark-950">
+                    <div id="leafletMap" class="w-full h-full z-10"></div>
+                    
+                    <!-- Quick Overlay Stats on Map -->
+                    <div class="absolute top-3 left-3 z-[400] bg-dark-950/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono shadow-xl pointer-events-auto">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-sans font-bold">Resumen En Ruta</div>
+                        <div class="flex items-center gap-3 mt-1 text-white">
+                            <span class="flex items-center gap-1 font-bold"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> <span id="mapEnRouteCount">0</span> En Ruta</span>
+                            <span class="text-slate-600">|</span>
+                            <span class="text-slate-300"><span id="mapWaitingCount">0</span> En Base</span>
+                            <span class="text-slate-600">|</span>
+                            <span class="text-emerald-400 font-bold"><span id="mapArrivedCount">0</span> Llegaron</span>
+                        </div>
+                    </div>
+
+                    <!-- Legend Overlay on Bottom-Right -->
+                    <div class="absolute bottom-3 right-3 z-[400] bg-dark-950/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-2 text-[11px] shadow-xl pointer-events-auto hidden sm:block">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-sans font-bold mb-1">Paraderos de la Ruta Rural</div>
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-300 font-sans">
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Huayruropata (Base)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400"></span> Base 8 Terminal (+8m)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-indigo-400"></span> Cachimayo</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Izcuchaca</span>
+                            <span class="flex items-center gap-1.5 col-span-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Terminal Anta (Fin 63m)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telemetry Cards for Active En-Route Vehicles -->
+                <div id="gpsActiveVehiclesStrip" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <!-- Dynamic Telemetry Cards Populated in JS -->
+                </div>
+            </div>
+        </section>
+
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-dark-900/80 p-3 rounded-2xl border border-slate-800 no-print">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <div class="relative w-full sm:w-60">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="searchInput" oninput="renderTable()" placeholder="Buscar móvil, placa, chofer..." class="w-full bg-dark-950 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex items-center gap-1 bg-dark-950 p-1 rounded-xl border border-slate-800 text-xs">
+                    <button onclick="setStatusFilter('ALL')" id="filterAll" class="px-2.5 py-1 rounded-lg font-bold bg-blue-600 text-white transition">Todos (<span id="countTotal">0</span>)</button>
+                    <button onclick="setStatusFilter('WAITING')" id="filterWaiting" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white transition">Espera (<span id="countWaiting">0</span>)</button>
+                    <button onclick="setStatusFilter('EN_ROUTE')" id="filterEnRoute" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white transition">En Ruta (<span id="countEnRoute">0</span>)</button>
+                    <button onclick="setStatusFilter('ARRIVED')" id="filterArrived" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white transition">Llegaron (<span id="countArrived">0</span>)</button>
+                </div>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-2">
+                <button onclick="iniciarHorariosDesdeHoraActual()" title="Iniciar la planilla de nuevo con la hora actual" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Iniciar desde Hora Actual
+                </button>
+                <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Imprimir A4
+                </button>
+                <button onclick="exportToCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Exportar Excel
+                </button>
+                <button onclick="loadSampleData()" class="px-3 py-1.5 bg-blue-950/60 hover:bg-blue-900 text-blue-300 text-xs font-semibold rounded-xl border border-blue-800/40 transition">
+                    Ejemplo
+                </button>
+                <button onclick="clearAllData()" class="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 text-xs font-semibold rounded-xl border border-red-800/40 transition">
+                    Vaciar
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden print:border-none print:shadow-none">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs sm:text-sm print-table">
+                    <thead class="bg-dark-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800 print:bg-white print:text-black">
+                        <tr>
+                            <th class="py-3 px-3 text-center w-12 font-bold font-mono">N°</th>
+                            <th class="py-3 px-3 font-semibold">Móvil / Placa</th>
+                            <th class="py-3 px-3 font-semibold hidden md:table-cell">Chofer</th>
+                            
+                            <!-- Checkpoints (+8, +12, +6, +19, +18) -->
+                            <th class="py-3 px-3 text-center bg-slate-800/40 font-mono text-white">
+                                <div id="thBase" class="font-bold">Salida Base</div>
+                                <div class="text-[10px] text-slate-400 font-normal">T0 (0 min)</div>
+                            </th>
+                            <th class="py-3 px-3 text-center font-mono text-sky-400">
+                                <div id="thC1" class="font-bold">Base 8 - Terminal Santiago</div>
+                                <div class="text-[10px] text-sky-400/80 font-normal">+8 min</div>
+                            </th>
+                            <th class="py-3 px-3 text-center font-mono text-cyan-400">
+                                <div id="thC2" class="font-bold">Control 2</div>
+                                <div class="text-[10px] text-cyan-400/80 font-normal">+12m (20m)</div>
+                            </th>
+                            <th class="py-3 px-3 text-center font-mono text-indigo-400">
+                                <div id="thC3" class="font-bold">Control 3</div>
+                                <div class="text-[10px] text-indigo-400/80 font-normal">+6m (26m)</div>
+                            </th>
+                            <th class="py-3 px-3 text-center font-mono text-purple-400">
+                                <div id="thC4" class="font-bold">Control 4</div>
+                                <div class="text-[10px] text-purple-400/80 font-normal">+19m (45m)</div>
+                            </th>
+                            <th class="py-3 px-3 text-center font-mono text-emerald-400 bg-emerald-950/20">
+                                <div id="thEnd" class="font-bold">Llegada Final</div>
+                                <div class="text-[10px] text-emerald-400/80 font-normal">+18m (Total 63m)</div>
+                            </th>
+
+                            <th class="py-3 px-3 text-center font-semibold">Estado en Vivo</th>
+                            <th class="py-3 px-3 font-semibold">Observación</th>
+                            <th class="py-3 px-3 text-center no-print w-28">Acción / GPS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fleetTableBody" class="divide-y divide-slate-800/70 text-slate-300">
+                        <!-- Rendered by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyTableAlert" class="hidden py-12 text-center text-slate-500">
+                <p class="text-sm font-semibold text-slate-400">No hay carros registrados en la planilla</p>
+                <p class="text-xs text-slate-500 mt-1">Presiona "EMPEZAR / SALIDA YA" para registrar la primera unidad con la hora actual.</p>
+            </div>
+        </div>
+
+        <section class="bg-dark-900 border border-slate-800 rounded-2xl p-4 text-xs no-print">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-300 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    Cadena de Tiempos (+8m &rarr; +12m &rarr; +6m &rarr; +19m &rarr; +18m)
+                </h3>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-dark-950 text-emerald-400 border border-slate-700 font-bold">
+                    Tiempo de Vuelta Completa: 63 min (1 hora con 3 min)
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center font-mono">
+                <div class="bg-dark-950 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 font-semibold">Salida Base</span>
+                    <div class="text-sm font-black text-white">0 min</div>
+                    <div class="text-[11px] text-slate-300 truncate mt-0.5" id="lblBase">Terminal Inicial</div>
+                </div>
+                <div class="bg-dark-950 p-2.5 rounded-xl border border-sky-900/40">
+                    <span class="text-[10px] text-sky-400 font-bold">+8 min</span>
+                    <div class="text-sm font-black text-sky-300">8 min</div>
+                    <div class="text-[11px] text-slate-300 truncate mt-0.5" id="lblC1">Base 8 - Terminal Santiago</div>
+                </div>
+                <div class="bg-dark-950 p-2.5 rounded-xl border border-cyan-900/40">
+                    <span class="text-[10px] text-cyan-400 font-bold">+12 min</span>
+                    <div class="text-sm font-black text-cyan-300">20 min</div>
+                    <div class="text-[11px] text-slate-300 truncate mt-0.5" id="lblC2">Control 2</div>
+                </div>
+                <div class="bg-dark-950 p-2.5 rounded-xl border border-indigo-900/40">
+                    <span class="text-[10px] text-indigo-400 font-bold">+6 min</span>
+                    <div class="text-sm font-black text-indigo-300">26 min</div>
+                    <div class="text-[11px] text-slate-300 truncate mt-0.5" id="lblC3">Control 3</div>
+                </div>
+                <div class="bg-dark-950 p-2.5 rounded-xl border border-purple-900/40">
+                    <span class="text-[10px] text-purple-400 font-bold">+19 min</span>
+                    <div class="text-sm font-black text-purple-300">45 min</div>
+                    <div class="text-[11px] text-slate-300 truncate mt-0.5" id="lblC4">Control 4</div>
+                </div>
+                <div class="bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-900/50">
+                    <span class="text-[10px] text-emerald-400 font-bold">+18 min</span>
+                    <div class="text-sm font-black text-emerald-300">63 min</div>
+                    <div class="text-[11px] text-emerald-400 truncate mt-0.5" id="lblEnd">Llegada Final</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800/80 py-3 text-center text-xs text-slate-500 no-print">
+        Control de Despacho &bull; Planilla con Hora Actual en Vivo y Cálculo Automático
+    </footer>
+
+    <div id="configModal" class="hidden fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-dark-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Nombres Personalizados de Paraderos
+                </h3>
+                <button onclick="toggleConfigModal(false)" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-400">Personaliza los nombres de cada punto de control para la planilla y exportaciones:</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Base de Salida (0 min)</label>
+                    <input type="text" id="cfgBase" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-sky-400 mb-1">Base 8 - Terminal Santiago (+8 min)</label>
+                        <input type="text" id="cfgC1" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-cyan-400 mb-1">Control 2 (+12 min)</label>
+                        <input type="text" id="cfgC2" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-indigo-400 mb-1">Control 3 (+6 min)</label>
+                        <input type="text" id="cfgC3" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-purple-400 mb-1">Control 4 (+19 min)</label>
+                        <input type="text" id="cfgC4" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-emerald-400 mb-1">Llegada Final (+18 min - Total 63 min)</label>
+                    <input type="text" id="cfgEnd" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                <button onclick="restoreDefaultCheckpoints()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+                    Restablecer
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="toggleConfigModal(false)" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-semibold rounded-xl transition">
+                        Cancelar
+                    </button>
+                    <button onclick="saveCheckpointSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ENVIAR RASTREO GPS POR CORREO -->
+    <div id="emailTrackingModal" class="hidden fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-dark-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>Enviar Enlace y Reporte GPS por Correo</span>
+                </h3>
+                <button onclick="closeEmailNotificationModal()" class="text-slate-400 hover:text-white transition">
+                    ✕
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Móvil a Rastrear</label>
+                    <select id="modalSelectUnit" onchange="updateEmailModalPreview()" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        <!-- Filled by JS -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Correo de Destino</label>
+                    <input type="email" id="modalDestEmail" placeholder="correo@empresa.com o pasajero@gmail.com" class="w-full bg-dark-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    <p class="text-[10px] text-slate-500 mt-1">Puedes enviar la ubicación en vivo al dueño de la unidad, pasajero, o central de control.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Vista Previa del Reporte de Rastreo</label>
+                    <div id="modalEmailPreviewText" class="w-full h-36 bg-dark-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-300 overflow-y-auto whitespace-pre-wrap leading-relaxed select-all">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800 flex-wrap gap-2">
+                <button onclick="copyEmailReportToClipboard()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Copiar Reporte</span>
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeEmailNotificationModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-semibold rounded-xl transition">
+                        Cerrar
+                    </button>
+                    <button onclick="submitModalSendEmail()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>Abrir Correo y Enviar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ROUTE_STEPS = [8, 12, 6, 19, 18];
+        const TOTAL_MINUTES = 63;
+
+        const DEFAULT_CHECKPOINTS = {
+            base: "Huayruropata (Cusco)",
+            c1: "Base 8 Terminal Santiago",
+            c2: "Arco Poroy",
+            c3: "Cachimayo",
+            c4: "Izcuchaca (Anta)",
+            end: "Terminal Anta"
+        };
+
+        // Coordenadas oficiales de paraderos rurales
+        const GPS_ROUTE_STOPS = [
+            { key: "base", name: "Huayruropata (Cusco)", lat: -13.5255, lng: -71.9560, stepMin: 0, color: "#10b981", badge: "🟢 Base" },
+            { key: "c1", name: "Base 8 Terminal Santiago", lat: -13.5332, lng: -71.9720, stepMin: 8, color: "#38bdf8", badge: "🔵 Base 8 (+8m)" },
+            { key: "c2", name: "Arco Poroy", lat: -13.5040, lng: -72.0120, stepMin: 20, color: "#a855f7", badge: "🟣 C2 +12m (20m)" },
+            { key: "c3", name: "Cachimayo", lat: -13.4810, lng: -72.0680, stepMin: 26, color: "#6366f1", badge: "🔷 C3 +6m (26m)" },
+            { key: "c4", name: "Izcuchaca (Anta)", lat: -13.4503, lng: -72.1465, stepMin: 45, color: "#eab308", badge: "🟡 C4 +19m (45m)" },
+            { key: "end", name: "Terminal Anta", lat: -13.4615, lng: -72.1580, stepMin: 63, color: "#ef4444", badge: "🏁 Fin 63m" }
+        ];
+
+        // Trazado de carretera PE-3S (Cusco - Poroy - Pampa de Anta - Izcuchaca - Anta)
+        const GPS_HIGHWAY_POLYLINE = [
+            [-13.5255, -71.9560], // Huayruropata
+            [-13.5280, -71.9640], // Av. Ejército
+            [-13.5332, -71.9720], // Base 8 Terminal Santiago
+            [-13.5310, -71.9800], // Cuesta Santa Ana
+            [-13.5220, -71.9930], // Puquio
+            [-13.5150, -72.0020], // Arco Tica Tica
+            [-13.5040, -72.0120], // Poroy Control
+            [-13.4980, -72.0350], // Poroy Pueblo
+            [-13.4900, -72.0510], // Huampar
+            [-13.4810, -72.0680], // Cachimayo Centro
+            [-13.4750, -72.0830], // Entrada Pampa Anta
+            [-13.4680, -72.1050], // Compone
+            [-13.4600, -72.1280], // Pampa de Anta
+            [-13.4503, -72.1465], // Izcuchaca Centro
+            [-13.4550, -72.1520], // Cruce Anta
+            [-13.4615, -72.1580]  // Terminal Anta
+        ];
+
+        let timeFormat = localStorage.getItem('planilla_time_format') || '12H';
+        let currentFilter = 'ALL';
+        let checkpoints = JSON.parse(localStorage.getItem('planilla_checkpoints')) || { ...DEFAULT_CHECKPOINTS };
+        if (checkpoints.base === "Salida Base" || !checkpoints.base || checkpoints.c1 === "Control 1" || checkpoints.c1 === "Terminal Santiago") {
+            checkpoints.c1 = "Base 8 Terminal Santiago";
+            if (!checkpoints.base || checkpoints.base === "Salida Base") checkpoints.base = DEFAULT_CHECKPOINTS.base;
+            localStorage.setItem('planilla_checkpoints', JSON.stringify(checkpoints));
+        }
+        let fleet = JSON.parse(localStorage.getItem('planilla_fleet_data')) || [];
+
+        // Variables de Control GPS
+        let gpsMap = null;
+        let leafletVehicleMarkers = {};
+        let leafletStopMarkers = [];
+        let leafletRoutePolyline = null;
+        let currentLayerIndex = 0;
+        let currentTileLayer = null;
+        let userGpsMarker = null;
+
+        const TILE_LAYERS = [
+            {
+                name: "🗺️ Modo Oscuro",
+                url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                subdomains: 'abcd',
+                maxZoom: 19
+            },
+            {
+                name: "🛰️ Satelital",
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                maxZoom: 19
+            },
+            {
+                name: "🚗 Calles",
+                url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                maxZoom: 19
+            }
+        ];
+
+        function updateLiveClock() {
+            const now = new Date();
+
+            const dateOptions = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            const dateStr = now.toLocaleDateString('es-PE', dateOptions);
+
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            const secStr = `:${String(seconds).padStart(2, '0')}`;
+            let digitsStr = "";
+            let periodStr = "";
+
+            if (timeFormat === '12H') {
+                const isPM = hours >= 12;
+                let h12 = hours % 12;
+                if (h12 === 0) h12 = 12;
+                digitsStr = `${String(h12).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                periodStr = isPM ? "PM" : "AM";
+            } else {
+                digitsStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                periodStr = "HRS";
+            }
+
+            const digitsEl = document.getElementById('liveClockDigits');
+            const secEl = document.getElementById('liveClockSeconds');
+            const periodEl = document.getElementById('liveClockPeriod');
+            const dateEl = document.getElementById('liveDateDescription');
+            const printStamp = document.getElementById('printDateStamp');
+
+            if (digitsEl) digitsEl.textContent = digitsStr;
+            if (secEl) secEl.textContent = secStr;
+            if (periodEl) periodEl.textContent = periodStr;
+            if (dateEl) dateEl.innerHTML = `<svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>${dateStr}</span>`;
+            if (printStamp) printStamp.textContent = `${dateStr} - ${digitsStr}${secStr} ${periodStr}`;
+        }
+
+        function setTimeFormat(format) {
+            timeFormat = format;
+            localStorage.setItem('planilla_time_format', timeFormat);
+            updateFormatToggleUI();
+            renderTable();
+            updateLiveClock();
+            showToast(`Formato cambiado a ${format === '12H' ? '12 Horas (AM/PM)' : '24 Horas'}`);
+        }
+
+        function updateFormatToggleUI() {
+            const btn12 = document.getElementById('toggle12H');
+            const btn24 = document.getElementById('toggle24H');
+            const badge = document.getElementById('currentFormatBadge');
+            const printLbl = document.getElementById('printModeLabel');
+
+            if (timeFormat === '12H') {
+                btn12.className = "px-3 py-1 text-xs font-bold rounded-lg transition bg-blue-600 text-white shadow";
+                btn24.className = "px-3 py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+                if (badge) badge.textContent = "MODO: 12H (AM/PM)";
+                if (printLbl) printLbl.textContent = "12 Horas (AM/PM)";
+            } else {
+                btn24.className = "px-3 py-1 text-xs font-bold rounded-lg transition bg-blue-600 text-white shadow";
+                btn12.className = "px-3 py-1 text-xs font-semibold rounded-lg transition text-slate-400 hover:text-white";
+                if (badge) badge.textContent = "MODO: 24 Horas";
+                if (printLbl) printLbl.textContent = "24 Horas (HH:MM)";
+            }
+        }
+
+        function formatMinutes(totalMinutes, forcedFormat = null) {
+            const mode = forcedFormat || timeFormat;
+            const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+            let hours = Math.floor(normalized / 60);
+            const mins = normalized % 60;
+
+            if (mode === '24H') {
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+            } else {
+                const period = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                if (hours === 0) hours = 12;
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
+            }
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            return ((h * 60) + m) % 1440;
+        }
+
+        function calculateVehicleTimeline(baseMinutes) {
+            const t0 = baseMinutes;
+            const t1 = t0 + ROUTE_STEPS[0];      // +8m (8m)
+            const t2 = t1 + ROUTE_STEPS[1];      // +12m (20m)
+            const t3 = t2 + ROUTE_STEPS[2];      // +6m  (26m)
+            const t4 = t3 + ROUTE_STEPS[3];      // +19m (45m)
+            const tEnd = t4 + ROUTE_STEPS[4];    // +18m (63m)
+
+            return {
+                baseMin: t0,
+                c1Min: t1,
+                c2Min: t2,
+                c3Min: t3,
+                c4Min: t4,
+                endMin: tEnd,
+                totalMinutes: TOTAL_MINUTES
+            };
+        }
+
+        function getLiveVehicleStatus(timeline) {
+            const now = new Date();
+            const curMin = (now.getHours() * 60) + now.getMinutes();
+
+            const start = timeline.baseMin;
+            const end = timeline.endMin;
+
+            if (curMin < start) {
+                const diff = start - curMin;
+                return {
+                    code: 'WAITING',
+                    badge: `<span class="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[11px] font-bold">En Espera</span>`,
+                    detail: `Sale en ${diff}m`,
+                    activeStep: 0
+                };
+            } else if (curMin >= start && curMin <= end) {
+                let targetCheckpoint = checkpoints.c1;
+                let stepNum = 1;
+
+                if (curMin < timeline.c1Min) {
+                    targetCheckpoint = checkpoints.c1;
+                    stepNum = 1;
+                } else if (curMin < timeline.c2Min) {
+                    targetCheckpoint = checkpoints.c2;
+                    stepNum = 2;
+                } else if (curMin < timeline.c3Min) {
+                    targetCheckpoint = checkpoints.c3;
+                    stepNum = 3;
+                } else if (curMin < timeline.c4Min) {
+                    targetCheckpoint = checkpoints.c4;
+                    stepNum = 4;
+                } else {
+                    targetCheckpoint = checkpoints.end;
+                    stepNum = 5;
+                }
+
+                return {
+                    code: 'EN_ROUTE',
+                    badge: `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold animate-pulse">En Tramo ${stepNum}</span>`,
+                    detail: `<span class="text-amber-400 font-semibold">&rarr; ${targetCheckpoint}</span>`,
+                    activeStep: stepNum
+                };
+            } else {
+                return {
+                    code: 'ARRIVED',
+                    badge: `<span class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">Llegada</span>`,
+                    detail: `Completó 63 min`,
+                    activeStep: 6
+                };
+            }
+        }
+
+        function setBatchStartTimeToNow() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const el = document.getElementById('batchStartTime');
+            if (el) el.value = `${h}:${m}`;
+        }
+
+        function iniciarHorariosDesdeHoraActual() {
+            const now = new Date();
+            const currentMin = (now.getHours() * 60) + now.getMinutes();
+            const formattedCurrent = formatMinutes(currentMin);
+            const intervalVal = parseInt(document.getElementById('batchInterval')?.value, 10) || 8;
+
+            if (fleet.length === 0) {
+                const count = parseInt(document.getElementById('batchCount')?.value, 10) || 6;
+                for (let i = 0; i < count; i++) {
+                    const stepMinutes = currentMin + (i * intervalVal);
+                    const unitNum = String(i + 1).padStart(2, '0');
+                    fleet.push({
+                        unit: unitNum,
+                        plate: `V${(i % 5) + 1}B-${200 + i}`,
+                        driver: `Conductor ${unitNum}`,
+                        email: `movil${unitNum}@transporteanta.pe`,
+                        baseTime: minutesTo24H(stepMinutes),
+                        incident: i === 0 ? 'Salida puntual' : ''
+                    });
+                }
+                const nextNum = fleet.length + 1;
+                document.getElementById('quickUnitNum').value = String(nextNum).padStart(2, '0');
+                document.getElementById('unitInput').value = String(nextNum).padStart(2, '0');
+                saveAndSortFleet();
+                showToast(`¡Planilla iniciada desde ${formattedCurrent}! ${count} móviles cada ${intervalVal}m`);
+                return;
+            }
+
+            const primerMovil = fleet[0].unit || "01";
+            const confirmar = confirm(
+                `¿Deseas iniciar la planilla de nuevo a partir de la hora actual (${formattedCurrent})?\n\n` +
+                `- El Móvil N° ${primerMovil} iniciará a las ${formattedCurrent}.\n` +
+                `- Los siguientes ${fleet.length - 1} móviles se recalcularán secuencialmente cada ${intervalVal} minutos.`
+            );
+
+            if (!confirmar) return;
+
+            fleet.forEach((item, index) => {
+                const newBaseMin = currentMin + (index * intervalVal);
+                item.baseTime = minutesTo24H(newBaseMin);
+                if (index === 0) {
+                    item.incident = 'Iniciado a la hora actual';
+                }
+            });
+
+            saveAndSortFleet();
+            showToast(`¡Planilla iniciada de nuevo desde la hora actual: ${formattedCurrent}!`);
+        }
+
+        function empezarSalidaAhora() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const currentTimeStr = `${h}:${m}`;
+
+            const inputUnitEl = document.getElementById('quickUnitNum');
+            let unitVal = inputUnitEl.value.trim();
+
+            if (!unitVal) {
+                unitVal = String(fleet.length + 1).padStart(2, '0');
+            }
+
+            // Si el móvil ya existe en la planilla, actualizar su hora a la hora actual
+            const existingIndex = fleet.findIndex(item => item.unit === unitVal);
+
+            if (existingIndex !== -1) {
+                fleet[existingIndex].baseTime = currentTimeStr;
+                fleet[existingIndex].incident = 'Salida en vivo ahora';
+                saveAndSortFleet();
+                const formattedTime = formatMinutes(parseTimeToMinutes(currentTimeStr));
+                showToast(`¡Móvil ${unitVal} actualizado con la hora actual: ${formattedTime}!`);
+
+                const numericPart = parseInt(unitVal, 10);
+                if (!isNaN(numericPart)) {
+                    inputUnitEl.value = String(numericPart + 1).padStart(2, '0');
+                    document.getElementById('unitInput').value = String(numericPart + 1).padStart(2, '0');
+                }
+                return;
+            }
+
+            const plateGenerated = `V${Math.floor(1 + Math.random() * 8)}X-${Math.floor(100 + Math.random() * 899)}`;
+            const defaultEmail = `movil${unitVal}@transporteanta.pe`;
+
+            fleet.push({
+                unit: unitVal,
+                plate: plateGenerated,
+                driver: `Conductor ${unitVal}`,
+                email: defaultEmail,
+                baseTime: currentTimeStr,
+                incident: 'Salida en vivo'
+            });
+
+            // Increment unit number
+            const numericPart = parseInt(unitVal, 10);
+            if (!isNaN(numericPart)) {
+                inputUnitEl.value = String(numericPart + 1).padStart(2, '0');
+                document.getElementById('unitInput').value = String(numericPart + 1).padStart(2, '0');
+            }
+
+            saveAndSortFleet();
+            const formattedTime = formatMinutes(parseTimeToMinutes(currentTimeStr));
+            showToast(`¡Móvil ${unitVal} despachado a la hora exacta: ${formattedTime}!`);
+        }
+
+        function setSystemTimeToInput() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('departureTime').value = `${h}:${m}`;
+        }
+
+        function handleSingleSubmit(event) {
+            event.preventDefault();
+            const unit = document.getElementById('unitInput').value.trim();
+            const plate = document.getElementById('plateInput').value.trim().toUpperCase();
+            const driver = document.getElementById('driverInput').value.trim();
+            const email = (document.getElementById('emailInput')?.value || '').trim();
+            const baseTime = document.getElementById('departureTime').value;
+
+            if (!unit || !baseTime) {
+                showToast("Ingresa el número de unidad y la hora", true);
+                return;
+            }
+
+            fleet.push({
+                unit,
+                plate,
+                driver,
+                email,
+                baseTime,
+                incident: ''
+            });
+
+            const num = parseInt(unit, 10);
+            if (!isNaN(num)) {
+                document.getElementById('quickUnitNum').value = String(num + 1).padStart(2, '0');
+                document.getElementById('unitInput').value = String(num + 1).padStart(2, '0');
+            } else {
+                document.getElementById('unitInput').value = '';
+            }
+
+            document.getElementById('plateInput').value = '';
+            document.getElementById('driverInput').value = '';
+            if (document.getElementById('emailInput')) document.getElementById('emailInput').value = '';
+            setSystemTimeToInput();
+
+            saveAndSortFleet();
+            showToast(`Móvil N° ${unit} programado en planilla con correo para rastreo`);
+        }
+
+        function generateBatchFleet() {
+            const startVal = document.getElementById('batchStartTime').value;
+            const intervalMin = parseInt(document.getElementById('batchInterval').value, 10) || 8;
+            const count = parseInt(document.getElementById('batchCount').value, 10) || 6;
+
+            if (!startVal) {
+                showToast("Ingresa la hora de inicio", true);
+                return;
+            }
+
+            const startMinutes = parseTimeToMinutes(startVal);
+
+            if (fleet.length > 0) {
+                const replace = confirm(
+                    `¿Deseas iniciar la planilla de nuevo con estas ${count} unidades desde ${formatMinutes(startMinutes)}?\n\n` +
+                    `- Haz clic en "Aceptar" para reiniciar la planilla desde esta hora.\n` +
+                    `- Haz clic en "Cancelar" para agregar al final de la planilla existente.`
+                );
+                if (replace) {
+                    fleet = [];
+                }
+            }
+
+            const baseIndex = fleet.length;
+            for (let i = 0; i < count; i++) {
+                const stepMinutes = startMinutes + (i * intervalMin);
+                const unitNum = String(baseIndex + i + 1).padStart(2, '0');
+                fleet.push({
+                    unit: unitNum,
+                    plate: `V${(i % 5) + 1}B-${200 + i}`,
+                    driver: `Conductor ${unitNum}`,
+                    email: `movil${unitNum}@transporteanta.pe`,
+                    baseTime: minutesTo24H(stepMinutes),
+                    incident: i === 0 ? 'Salida de inicio' : ''
+                });
+            }
+
+            const nextNum = fleet.length + 1;
+            document.getElementById('quickUnitNum').value = String(nextNum).padStart(2, '0');
+            document.getElementById('unitInput').value = String(nextNum).padStart(2, '0');
+
+            saveAndSortFleet();
+            showToast(`Planilla: ${count} unidades iniciadas desde ${formatMinutes(startMinutes)} cada ${intervalMin}m`);
+        }
+
+        function minutesTo24H(totalMinutes) {
+            const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+            const hours = Math.floor(normalized / 60);
+            const mins = normalized % 60;
+            return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        }
+
+        function setStatusFilter(filter) {
+            currentFilter = filter;
+            const map = {
+                'ALL': 'filterAll',
+                'WAITING': 'filterWaiting',
+                'EN_ROUTE': 'filterEnRoute',
+                'ARRIVED': 'filterArrived'
+            };
+
+            Object.keys(map).forEach(key => {
+                const btn = document.getElementById(map[key]);
+                if (key === filter) {
+                    btn.className = "px-2.5 py-1 rounded-lg font-bold bg-blue-600 text-white transition";
+                } else {
+                    btn.className = "px-2 py-1 rounded-lg text-slate-400 hover:text-white transition";
+                }
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('fleetTableBody');
+            const alertEmpty = document.getElementById('emptyTableAlert');
+            const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+            tbody.innerHTML = '';
+
+            let cTotal = fleet.length;
+            let cWait = 0;
+            let cRoute = 0;
+            let cArrive = 0;
+
+            const filteredList = fleet.filter((item) => {
+                const baseMin = parseTimeToMinutes(item.baseTime);
+                const timeline = calculateVehicleTimeline(baseMin);
+                const status = getLiveVehicleStatus(timeline);
+
+                if (status.code === 'WAITING') cWait++;
+                else if (status.code === 'EN_ROUTE') cRoute++;
+                else if (status.code === 'ARRIVED') cArrive++;
+
+                const matchText = (item.unit || '').toLowerCase().includes(searchVal) ||
+                                  (item.plate || '').toLowerCase().includes(searchVal) ||
+                                  (item.driver || '').toLowerCase().includes(searchVal) ||
+                                  (item.email || '').toLowerCase().includes(searchVal);
+
+                const matchStatus = (currentFilter === 'ALL') || (status.code === currentFilter);
+
+                return matchText && matchStatus;
+            });
+
+            document.getElementById('countTotal').textContent = cTotal;
+            document.getElementById('countWaiting').textContent = cWait;
+            document.getElementById('countEnRoute').textContent = cRoute;
+            document.getElementById('countArrived').textContent = cArrive;
+
+            if (filteredList.length === 0) {
+                alertEmpty.classList.remove('hidden');
+            } else {
+                alertEmpty.classList.add('hidden');
+            }
+
+            filteredList.forEach((item, index) => {
+                const baseMin = parseTimeToMinutes(item.baseTime);
+                const timeline = calculateVehicleTimeline(baseMin);
+                const liveStatus = getLiveVehicleStatus(timeline);
+                const fleetIndex = fleet.indexOf(item);
+
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-800/40 transition-colors border-b border-slate-800/60 print:border-black ${liveStatus.code === 'EN_ROUTE' ? 'bg-blue-950/20' : ''}`;
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-400 text-xs">${index + 1}</td>
+                    
+                    <td class="py-2.5 px-3">
+                        <div class="font-bold text-white flex items-center gap-1.5 font-mono">
+                            <span class="px-2 py-0.5 rounded bg-blue-600/20 text-blue-300 border border-blue-500/30 text-xs">
+                                N° ${item.unit}
+                            </span>
+                            ${item.plate ? `<span class="text-xs text-slate-400 print:text-black font-semibold">(${item.plate})</span>` : ''}
+                        </div>
+                    </td>
+
+                    <td class="py-2.5 px-3 hidden md:table-cell text-slate-300 text-xs print:text-black">
+                        <div class="font-medium flex items-center justify-between">
+                            <span>${item.driver || '<span class="text-slate-600 italic">Chofer por asignar</span>'}</span>
+                            <button onclick="editDriverAndEmail(${fleetIndex})" class="text-[10px] text-slate-500 hover:text-emerald-400 transition p-0.5 no-print" title="Editar chofer y correo de rastreo">✏️</button>
+                        </div>
+                        ${item.email ? `<div class="text-[10px] text-cyan-300 font-mono flex items-center gap-1 mt-0.5 cursor-pointer hover:underline" onclick="sendGpsTrackingEmail('${item.unit}')" title="Enviar rastreo por correo a este chofer"><span class="text-emerald-400">✉</span><span class="truncate">${item.email}</span></div>` : `<button onclick="editDriverAndEmail(${fleetIndex})" class="text-[10px] text-slate-500 hover:text-cyan-400 italic mt-0.5 no-print">+ Agregar correo rastreo</button>`}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-bold text-white bg-slate-900/60 print:bg-white print:text-black">
+                        ${formatMinutes(timeline.baseMin)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-semibold text-sky-300 print:text-black">
+                        ${formatMinutes(timeline.c1Min)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-semibold text-cyan-300 print:text-black">
+                        ${formatMinutes(timeline.c2Min)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-semibold text-indigo-300 print:text-black">
+                        ${formatMinutes(timeline.c3Min)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-semibold text-purple-300 print:text-black">
+                        ${formatMinutes(timeline.c4Min)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center font-mono font-extrabold text-emerald-300 bg-emerald-950/20 print:bg-white print:text-black">
+                        ${formatMinutes(timeline.endMin)}
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center">
+                        <div class="inline-flex flex-col items-center">
+                            ${liveStatus.badge}
+                            <span class="text-[10px] text-slate-400 mt-0.5 print:hidden">${liveStatus.detail}</span>
+                        </div>
+                    </td>
+
+                    <td class="py-2.5 px-3 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-300 print:text-black">${item.incident || '<span class="text-slate-600">-</span>'}</span>
+                            <button onclick="editIncident(${fleetIndex})" class="text-slate-500 hover:text-amber-400 no-print" title="Editar observación">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+
+                    <td class="py-2.5 px-3 text-center no-print">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="locateVehicleOnMap(${fleetIndex})" class="p-1 rounded-lg text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/60 transition" title="Rastrear en Mapa GPS">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
+                            <button onclick="sendGpsTrackingEmail('${item.unit}')" class="p-1 rounded-lg text-blue-400 hover:text-blue-200 hover:bg-blue-950/60 transition" title="Enviar enlace de rastreo GPS por correo">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                            <button onclick="editDepartureTime(${fleetIndex})" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Modificar hora">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <button onclick="deleteUnit(${fleetIndex})" class="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition" title="Eliminar registro">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            updateGpsVehicles();
+            updateEmailDatalist();
+        }
+
+        function editDepartureTime(index) {
+            const item = fleet[index];
+            const currentFormatted = formatMinutes(parseTimeToMinutes(item.baseTime));
+            const promptVal = prompt(
+                `Editar hora de salida para Móvil ${item.unit} (formato 24h ej. 07:15):\nHora actual: ${currentFormatted}`,
+                item.baseTime
+            );
+
+            if (promptVal !== null && promptVal.trim() !== '') {
+                item.baseTime = promptVal.trim();
+                saveAndSortFleet();
+                showToast(`Hora actualizada para Móvil ${item.unit}`);
+            }
+        }
+
+        function editIncident(index) {
+            const item = fleet[index];
+            const promptVal = prompt(`Observación para Móvil ${item.unit}:`, item.incident || '');
+            if (promptVal !== null) {
+                item.incident = promptVal.trim();
+                saveAndSortFleet();
+                showToast("Observación guardada");
+            }
+        }
+
+        function editDriverAndEmail(index) {
+            const item = fleet[index];
+            if (!item) return;
+
+            const newDriver = prompt(`Nombre del conductor para Móvil N° ${item.unit}:`, item.driver || '');
+            if (newDriver === null) return;
+
+            const newEmail = prompt(`Correo electrónico de rastreo GPS para Móvil N° ${item.unit} (ej. chofer@gmail.com):`, item.email || '');
+            if (newEmail === null) return;
+
+            item.driver = newDriver.trim();
+            item.email = newEmail.trim();
+
+            saveAndSortFleet();
+            showToast(`Conductor y correo de rastreo actualizados para Móvil N° ${item.unit}`);
+        }
+
+        function deleteUnit(index) {
+            fleet.splice(index, 1);
+            saveAndSortFleet();
+            showToast("Unidad eliminada");
+        }
+
+        function saveAndSortFleet() {
+            fleet.sort((a, b) => parseTimeToMinutes(a.baseTime) - parseTimeToMinutes(b.baseTime));
+            localStorage.setItem('planilla_fleet_data', JSON.stringify(fleet));
+            renderTable();
+        }
+
+        function clearAllData() {
+            fleet = [];
+            saveAndSortFleet();
+            document.getElementById('quickUnitNum').value = "01";
+            document.getElementById('unitInput').value = "01";
+            showToast("Planilla vaciada");
+        }
+
+        function loadSampleData() {
+            const now = new Date();
+            const currentMin = (now.getHours() * 60) + now.getMinutes();
+
+            fleet = [
+                { unit: "01", plate: "X1B-740", driver: "Víctor Quispe M.", email: "victor.quispe@transporteanta.pe", baseTime: minutesTo24H(currentMin - 24), incident: "Pasando Cachimayo a Izcuchaca" },
+                { unit: "02", plate: "X2A-512", driver: "Yoni Huamán C.", email: "yoni.huaman@transporteanta.pe", baseTime: minutesTo24H(currentMin - 12), incident: "Subiendo Arco Poroy" },
+                { unit: "03", plate: "X3C-904", driver: "Franklin Apaza T.", email: "franklin.apaza@transporteanta.pe", baseTime: minutesTo24H(currentMin - 4), incident: "Saliendo Terminal Santiago" },
+                { unit: "04", plate: "X4D-230", driver: "Edison Condori P.", email: "edison.condori@transporteanta.pe", baseTime: minutesTo24H(currentMin + 6), incident: "En espera en Huayruropata" },
+                { unit: "05", plate: "X5E-811", driver: "Julio C. Ramos", email: "julio.ramos@transporteanta.pe", baseTime: minutesTo24H(currentMin + 14), incident: "" }
+            ];
+
+            document.getElementById('quickUnitNum').value = "06";
+            document.getElementById('unitInput').value = "06";
+
+            saveAndSortFleet();
+            showToast(`Ruta Huayruropata-Anta cargada con GPS y correos`);
+        }
+
+        function toggleConfigModal(open) {
+            const modal = document.getElementById('configModal');
+            if (open) {
+                document.getElementById('cfgBase').value = checkpoints.base;
+                document.getElementById('cfgC1').value = checkpoints.c1;
+                document.getElementById('cfgC2').value = checkpoints.c2;
+                document.getElementById('cfgC3').value = checkpoints.c3;
+                document.getElementById('cfgC4').value = checkpoints.c4;
+                document.getElementById('cfgEnd').value = checkpoints.end;
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function saveCheckpointSettings() {
+            checkpoints.base = document.getElementById('cfgBase').value.trim() || DEFAULT_CHECKPOINTS.base;
+            checkpoints.c1 = document.getElementById('cfgC1').value.trim() || DEFAULT_CHECKPOINTS.c1;
+            checkpoints.c2 = document.getElementById('cfgC2').value.trim() || DEFAULT_CHECKPOINTS.c2;
+            checkpoints.c3 = document.getElementById('cfgC3').value.trim() || DEFAULT_CHECKPOINTS.c3;
+            checkpoints.c4 = document.getElementById('cfgC4').value.trim() || DEFAULT_CHECKPOINTS.c4;
+            checkpoints.end = document.getElementById('cfgEnd').value.trim() || DEFAULT_CHECKPOINTS.end;
+
+            localStorage.setItem('planilla_checkpoints', JSON.stringify(checkpoints));
+            updateCheckpointLabels();
+            toggleConfigModal(false);
+            renderTable();
+            showToast("Nombres de paraderos actualizados");
+        }
+
+        function restoreDefaultCheckpoints() {
+            checkpoints = { ...DEFAULT_CHECKPOINTS };
+            document.getElementById('cfgBase').value = checkpoints.base;
+            document.getElementById('cfgC1').value = checkpoints.c1;
+            document.getElementById('cfgC2').value = checkpoints.c2;
+            document.getElementById('cfgC3').value = checkpoints.c3;
+            document.getElementById('cfgC4').value = checkpoints.c4;
+            document.getElementById('cfgEnd').value = checkpoints.end;
+            saveCheckpointSettings();
+        }
+
+        function updateCheckpointLabels() {
+            document.getElementById('thBase').textContent = checkpoints.base;
+            document.getElementById('thC1').textContent = checkpoints.c1;
+            document.getElementById('thC2').textContent = checkpoints.c2;
+            document.getElementById('thC3').textContent = checkpoints.c3;
+            document.getElementById('thC4').textContent = checkpoints.c4;
+            document.getElementById('thEnd').textContent = checkpoints.end;
+
+            document.getElementById('lblBase').textContent = checkpoints.base;
+            document.getElementById('lblC1').textContent = checkpoints.c1;
+            document.getElementById('lblC2').textContent = checkpoints.c2;
+            document.getElementById('lblC3').textContent = checkpoints.c3;
+            document.getElementById('lblC4').textContent = checkpoints.c4;
+            document.getElementById('lblEnd').textContent = checkpoints.end;
+        }
+
+        function exportToCSV() {
+            if (fleet.length === 0) {
+                showToast("No hay datos para exportar", true);
+                return;
+            }
+
+            const headers = [
+                "N°",
+                "Unidad",
+                "Placa",
+                "Chofer",
+                `Salida Base (${checkpoints.base})`,
+                `Control 1 +8m (${checkpoints.c1})`,
+                `Control 2 +12m (${checkpoints.c2})`,
+                `Control 3 +6m (${checkpoints.c3})`,
+                `Control 4 +19m (${checkpoints.c4})`,
+                `Llegada +18m (${checkpoints.end})`,
+                "Observacion",
+                "Formato"
+            ];
+
+            const rows = fleet.map((item, idx) => {
+                const baseMin = parseTimeToMinutes(item.baseTime);
+                const t = calculateVehicleTimeline(baseMin);
+                return [
+                    idx + 1,
+                    item.unit,
+                    item.plate || "",
+                    `"${item.driver || ''}"`,
+                    `"${formatMinutes(t.baseMin)}"`,
+                    `"${formatMinutes(t.c1Min)}"`,
+                    `"${formatMinutes(t.c2Min)}"`,
+                    `"${formatMinutes(t.c3Min)}"`,
+                    `"${formatMinutes(t.c4Min)}"`,
+                    `"${formatMinutes(t.endMin)}"`,
+                    `"${item.incident || ''}"`,
+                    `"${timeFormat}"`
+                ];
+            });
+
+            const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Planilla_Salida_Carros_${timeFormat}_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Planilla exportada a Excel (CSV)");
+        }
+
+        // ================= FUNCIONES DE RADAR Y MAPA GPS =================
+        function getGpsCoordinatesForElapsed(elapsedMinutes) {
+            const times = [0, 4, 8, 12, 16, 18, 20, 22, 24, 26, 31, 36, 41, 45, 54, 63];
+            if (elapsedMinutes <= 0) {
+                return { lat: GPS_HIGHWAY_POLYLINE[0][0], lng: GPS_HIGHWAY_POLYLINE[0][1], status: 'WAITING', speed: 0 };
+            }
+            if (elapsedMinutes >= 63) {
+                const last = GPS_HIGHWAY_POLYLINE[GPS_HIGHWAY_POLYLINE.length - 1];
+                return { lat: last[0], lng: last[1], status: 'ARRIVED', speed: 0 };
+            }
+
+            for (let i = 0; i < times.length - 1; i++) {
+                if (elapsedMinutes >= times[i] && elapsedMinutes <= times[i + 1]) {
+                    const span = times[i + 1] - times[i];
+                    const segFraction = span > 0 ? (elapsedMinutes - times[i]) / span : 0;
+                    const p1 = GPS_HIGHWAY_POLYLINE[i];
+                    const p2 = GPS_HIGHWAY_POLYLINE[i + 1];
+                    const lat = p1[0] + (p2[0] - p1[0]) * segFraction;
+                    const lng = p1[1] + (p2[1] - p1[1]) * segFraction;
+                    const speed = Math.round(44 + (Math.sin(elapsedMinutes * 1.5) * 6));
+                    return { lat, lng, status: 'EN_ROUTE', speed: Math.max(25, speed) };
+                }
+            }
+            const last = GPS_HIGHWAY_POLYLINE[GPS_HIGHWAY_POLYLINE.length - 1];
+            return { lat: last[0], lng: last[1], status: 'ARRIVED', speed: 0 };
+        }
+
+        function initGpsMap() {
+            if (typeof L === 'undefined') {
+                console.warn("Leaflet no disponible, cargando radar interactivo");
+                renderSvgGpsFallback();
+                return;
+            }
+
+            if (gpsMap) return;
+
+            try {
+                gpsMap = L.map('leafletMap', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([-13.4880, -72.0570], 11);
+
+                L.control.zoom({ position: 'topright' }).addTo(gpsMap);
+
+                currentTileLayer = L.tileLayer(TILE_LAYERS[currentLayerIndex].url, {
+                    subdomains: TILE_LAYERS[currentLayerIndex].subdomains || 'abc',
+                    maxZoom: 19
+                }).addTo(gpsMap);
+
+                // Polilínea resplandeciente de la ruta
+                leafletRoutePolyline = L.polyline(GPS_HIGHWAY_POLYLINE, {
+                    color: '#10b981',
+                    weight: 6,
+                    opacity: 0.85,
+                    lineJoin: 'round'
+                }).addTo(gpsMap);
+
+                // Marcadores de paraderos oficiales
+                GPS_ROUTE_STOPS.forEach(stop => {
+                    const stopIcon = L.divIcon({
+                        className: 'custom-stop-marker',
+                        html: `
+                            <div class="px-2 py-0.5 rounded-lg text-[10px] font-black border shadow-lg whitespace-nowrap flex items-center gap-1" style="background: #0f172a; border-color: ${stop.color}; color: ${stop.color};">
+                                <span>${stop.badge}</span>
+                            </div>
+                        `,
+                        iconSize: [85, 20],
+                        iconAnchor: [42, 10]
+                    });
+
+                    const m = L.marker([stop.lat, stop.lng], { icon: stopIcon }).addTo(gpsMap);
+                    m.bindPopup(`
+                        <div class="font-sans text-xs">
+                            <strong style="color: ${stop.color};">${stop.name}</strong>
+                            <div class="text-[11px] text-slate-300 mt-1">Paradero Oficial de Control</div>
+                            <div class="text-[10px] text-slate-400 font-mono">Tramos acumulados: ${stop.stepMin} min</div>
+                        </div>
+                    `);
+                    leafletStopMarkers.push(m);
+                });
+
+                updateGpsVehicles();
+            } catch(err) {
+                console.error("Error inicializando Leaflet:", err);
+                renderSvgGpsFallback();
+            }
+        }
+
+        function updateGpsVehicles() {
+            const now = new Date();
+            const curMin = (now.getHours() * 60) + now.getMinutes() + (now.getSeconds() / 60);
+
+            let enRouteCount = 0;
+            let waitingCount = 0;
+            let arrivedCount = 0;
+            const activeVehicles = [];
+
+            fleet.forEach((item) => {
+                const baseMin = parseTimeToMinutes(item.baseTime);
+                const elapsed = curMin - baseMin;
+                const geo = getGpsCoordinatesForElapsed(elapsed);
+
+                if (geo.status === 'EN_ROUTE') {
+                    enRouteCount++;
+                    activeVehicles.push({ item, geo, elapsed });
+                } else if (geo.status === 'WAITING') {
+                    waitingCount++;
+                } else {
+                    arrivedCount++;
+                }
+
+                if (gpsMap && typeof L !== 'undefined') {
+                    const markerKey = `unit_${item.unit}`;
+                    const inRoute = geo.status === 'EN_ROUTE';
+                    const iconHtml = `
+                        <div class="relative flex items-center justify-center cursor-pointer">
+                            <div class="absolute -inset-1 rounded-full ${inRoute ? 'bg-amber-400 animate-ping opacity-75' : 'bg-emerald-400 opacity-30'}"></div>
+                            <div class="relative px-2 py-1 rounded-xl shadow-2xl font-mono font-black text-xs border flex items-center gap-1 ${
+                                inRoute ? 'bg-amber-500 text-dark-950 border-amber-300' : 'bg-emerald-700 text-white border-emerald-400'
+                            }">
+                                <span>🚐</span>
+                                <span>${item.unit}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    const busIcon = L.divIcon({
+                        className: 'custom-bus-marker',
+                        html: iconHtml,
+                        iconSize: [44, 26],
+                        iconAnchor: [22, 13]
+                    });
+
+                    if (!leafletVehicleMarkers[markerKey]) {
+                        const marker = L.marker([geo.lat, geo.lng], { icon: busIcon }).addTo(gpsMap);
+                        leafletVehicleMarkers[markerKey] = marker;
+                    } else {
+                        leafletVehicleMarkers[markerKey].setLatLng([geo.lat, geo.lng]);
+                        leafletVehicleMarkers[markerKey].setIcon(busIcon);
+                    }
+
+                    let nextStop = "Terminal Anta";
+                    if (elapsed < 8) nextStop = "Base 8 Terminal Santiago (en " + Math.ceil(8 - elapsed) + "m)";
+                    else if (elapsed < 20) nextStop = "Arco Poroy (en " + Math.ceil(20 - elapsed) + "m)";
+                    else if (elapsed < 26) nextStop = "Cachimayo (en " + Math.ceil(26 - elapsed) + "m)";
+                    else if (elapsed < 45) nextStop = "Izcuchaca (en " + Math.ceil(45 - elapsed) + "m)";
+                    else if (elapsed <= 63) nextStop = "Terminal Anta (en " + Math.ceil(63 - elapsed) + "m)";
+                    else nextStop = "Destino completado";
+
+                    const popupContent = `
+                        <div class="p-1 font-sans text-xs min-w-[220px]">
+                            <div class="flex items-center justify-between pb-1 mb-1.5 border-b border-slate-700">
+                                <span class="font-black text-amber-400 text-sm">🚐 Móvil N° ${item.unit}</span>
+                                <span class="font-mono text-[10px] text-slate-400">${item.plate || 'V-ANTA'}</span>
+                            </div>
+                            <div class="space-y-1 text-slate-200 text-[11px]">
+                                <div><strong>Chofer:</strong> ${item.driver || 'Por asignar'}</div>
+                                ${item.email ? `<div><strong>Correo Chofer:</strong> <span class="font-mono text-cyan-300 text-[10px]">${item.email}</span></div>` : ''}
+                                <div><strong>Salida Base:</strong> <span class="font-mono text-emerald-400">${formatMinutes(baseMin)}</span></div>
+                                <div><strong>Velocidad GPS:</strong> <span class="font-mono text-cyan-300 font-bold">${geo.speed} km/h</span></div>
+                                <div><strong>Próximo Control:</strong> <span class="text-amber-300 font-semibold">${nextStop}</span></div>
+                                <div><strong>Coordenadas:</strong> <span class="font-mono text-[10px] text-slate-400">${geo.lat.toFixed(4)}, ${geo.lng.toFixed(4)}</span></div>
+                                <div class="pt-1.5 flex items-center justify-between text-[10px] border-t border-slate-800 text-slate-400">
+                                    <span>📡 GPS 4G Conectado</span>
+                                    <span class="text-emerald-400 font-bold">En Línea</span>
+                                </div>
+                                <button onclick="sendGpsTrackingEmail('${item.unit}')" class="mt-2 w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-lg font-bold text-[10px] flex items-center justify-center gap-1 transition shadow cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>Compartir Ubicación por Correo</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    leafletVehicleMarkers[markerKey].bindPopup(popupContent);
+                }
+            });
+
+            // Limpiar marcadores de móviles eliminados
+            if (gpsMap && typeof L !== 'undefined') {
+                const currentUnits = new Set(fleet.map(f => `unit_${f.unit}`));
+                Object.keys(leafletVehicleMarkers).forEach(key => {
+                    if (!currentUnits.has(key)) {
+                        gpsMap.removeLayer(leafletVehicleMarkers[key]);
+                        delete leafletVehicleMarkers[key];
+                    }
+                });
+            }
+
+            const enRouteEl = document.getElementById('mapEnRouteCount');
+            const waitingEl = document.getElementById('mapWaitingCount');
+            const arrivedEl = document.getElementById('mapArrivedCount');
+            const headerCountEl = document.getElementById('headerGpsCount');
+
+            if (enRouteEl) enRouteEl.textContent = enRouteCount;
+            if (waitingEl) waitingEl.textContent = waitingCount;
+            if (arrivedEl) arrivedEl.textContent = arrivedCount;
+            if (headerCountEl) headerCountEl.textContent = `${enRouteCount} en ruta`;
+
+            renderTelemetryStrip(activeVehicles);
+        }
+
+        function renderTelemetryStrip(activeVehicles) {
+            const container = document.getElementById('gpsActiveVehiclesStrip');
+            if (!container) return;
+
+            if (activeVehicles.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-3 px-4 bg-dark-950/60 border border-slate-800 rounded-2xl text-center text-xs text-slate-500">
+                        <span>No hay unidades en tránsito en este instante. Presiona <strong>"INICIAR / SALIDA YA"</strong> o <strong>"Iniciar Jornada Ahora"</strong> para activar el radar GPS en la ruta.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activeVehicles.map(({ item, geo, elapsed }) => {
+                let nextStopName = "Terminal Anta";
+                let minLeft = Math.ceil(63 - elapsed);
+                if (elapsed < 8) { nextStopName = "Base 8 Terminal Santiago"; minLeft = Math.ceil(8 - elapsed); }
+                else if (elapsed < 20) { nextStopName = "Arco Poroy"; minLeft = Math.ceil(20 - elapsed); }
+                else if (elapsed < 26) { nextStopName = "Cachimayo"; minLeft = Math.ceil(26 - elapsed); }
+                else if (elapsed < 45) { nextStopName = "Izcuchaca"; minLeft = Math.ceil(45 - elapsed); }
+
+                const progressPercent = Math.min(100, Math.round((elapsed / 63) * 100));
+
+                return `
+                    <div onclick="locateVehicleOnMapByUnit('${item.unit}')" class="bg-dark-950/80 hover:bg-dark-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-3 shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span class="font-black text-sm text-white group-hover:text-emerald-400 transition font-mono">Móvil ${item.unit}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">(${item.plate || 'V-ANTA'})</span>
+                            </div>
+                            <span class="font-mono text-xs font-bold text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded-lg border border-cyan-800/40">
+                                ${geo.speed} km/h
+                            </span>
+                        </div>
+                        <div class="text-[11px] text-slate-300 space-y-1">
+                            <div class="truncate text-slate-400">👤 ${item.driver || 'Chofer rural'}</div>
+                            ${item.email ? `
+                            <div class="flex items-center justify-between text-[10px] text-cyan-300 font-mono">
+                                <span class="truncate">✉️ ${item.email}</span>
+                                <button onclick="event.stopPropagation(); sendGpsTrackingEmail('${item.unit}')" class="text-blue-400 hover:text-blue-300 font-sans font-bold hover:underline ml-1 shrink-0" title="Compartir reporte GPS por correo">
+                                    Enviar GPS
+                                </button>
+                            </div>
+                            ` : ''}
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-slate-400">Próximo: <strong class="text-amber-300 font-semibold">${nextStopName}</strong></span>
+                                <span class="font-mono text-emerald-400 font-bold">en ${minLeft}m</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full transition-all" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function locateVehicleOnMap(index) {
+            const item = fleet[index];
+            if (!item) return;
+            locateVehicleOnMapByUnit(item.unit);
+        }
+
+        function locateVehicleOnMapByUnit(unit) {
+            const item = fleet.find(f => f.unit === unit);
+            if (!item) return;
+
+            scrollToGpsMap();
+
+            const now = new Date();
+            const curMin = (now.getHours() * 60) + now.getMinutes() + (now.getSeconds() / 60);
+            const baseMin = parseTimeToMinutes(item.baseTime);
+            const geo = getGpsCoordinatesForElapsed(curMin - baseMin);
+
+            if (gpsMap && typeof L !== 'undefined') {
+                gpsMap.flyTo([geo.lat, geo.lng], 14, { animate: true, duration: 1.2 });
+                const markerKey = `unit_${item.unit}`;
+                if (leafletVehicleMarkers[markerKey]) {
+                    setTimeout(() => {
+                        leafletVehicleMarkers[markerKey].openPopup();
+                    }, 1200);
+                }
+            }
+            showToast(`📍 GPS enfocado en Móvil N° ${unit} (${geo.speed} km/h)`);
+        }
+
+        function scrollToGpsMap() {
+            const sec = document.getElementById('gpsMapSection');
+            if (sec) {
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const content = document.getElementById('gpsMapContent');
+                if (content && content.classList.contains('hidden')) {
+                    toggleGpsMapCollapse();
+                }
+                if (gpsMap) {
+                    setTimeout(() => gpsMap.invalidateSize(), 300);
+                }
+            }
+        }
+
+        function centerMapOnFleet() {
+            if (gpsMap && leafletRoutePolyline) {
+                gpsMap.fitBounds(leafletRoutePolyline.getBounds(), { padding: [40, 40] });
+                showToast("Mapa centrado en el circuito Huayruropata - Anta");
+            }
+        }
+
+        function toggleMapLayer() {
+            if (!gpsMap || typeof L === 'undefined') return;
+            currentLayerIndex = (currentLayerIndex + 1) % TILE_LAYERS.length;
+            const nextLayer = TILE_LAYERS[currentLayerIndex];
+
+            if (currentTileLayer) {
+                gpsMap.removeLayer(currentTileLayer);
+            }
+
+            currentTileLayer = L.tileLayer(nextLayer.url, {
+                subdomains: nextLayer.subdomains || 'abc',
+                maxZoom: 19
+            }).addTo(gpsMap);
+
+            const btn = document.getElementById('btnLayerToggle');
+            if (btn) btn.textContent = nextLayer.name;
+            showToast(`Capa de mapa: ${nextLayer.name}`);
+        }
+
+        function locateUserPosition() {
+            if (!navigator.geolocation) {
+                showToast("Geolocalización no soportada en este navegador", true);
+                return;
+            }
+            showToast("Obteniendo posición GPS del dispositivo...");
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude, accuracy } = pos.coords;
+                    if (gpsMap && typeof L !== 'undefined') {
+                        if (userGpsMarker) {
+                            gpsMap.removeLayer(userGpsMarker);
+                        }
+                        const userIcon = L.divIcon({
+                            className: 'user-gps-marker',
+                            html: `
+                                <div class="relative flex items-center justify-center">
+                                    <span class="w-4 h-4 rounded-full bg-cyan-400 animate-ping absolute"></span>
+                                    <span class="w-3.5 h-3.5 rounded-full bg-cyan-500 border-2 border-white shadow-lg relative"></span>
+                                </div>
+                            `,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        });
+                        userGpsMarker = L.marker([latitude, longitude], { icon: userIcon }).addTo(gpsMap);
+                        userGpsMarker.bindPopup(`<strong>Tu Ubicación GPS</strong><br>Precisión: ±${Math.round(accuracy)}m`).openPopup();
+                        gpsMap.flyTo([latitude, longitude], 14);
+                        showToast(`GPS Conectado: Ubicación localizada con ±${Math.round(accuracy)}m de precisión`);
+                    }
+                },
+                (err) => {
+                    showToast("No se pudo obtener la ubicación GPS (permiso denegado)", true);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function toggleGpsMapCollapse() {
+            const content = document.getElementById('gpsMapContent');
+            const btn = document.getElementById('btnCollapseMap');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                if (btn) btn.textContent = '▼';
+                if (gpsMap) setTimeout(() => gpsMap.invalidateSize(), 200);
+            } else {
+                content.classList.add('hidden');
+                if (btn) btn.textContent = '▲';
+            }
+        }
+
+        function renderSvgGpsFallback() {
+            const el = document.getElementById('leafletMap');
+            if (!el) return;
+            el.innerHTML = `
+                <div class="w-full h-full flex flex-col items-center justify-center p-4 bg-dark-950 text-center">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-2">
+                        <svg class="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-white mb-1">Radar GPS Satelital - Huayruropata &rarr; Izcuchaca &rarr; Anta</h3>
+                    <p class="text-xs text-slate-400 max-w-md mb-3">Ruta rural activa: 42 km conectando Cusco con Anta. Telemetría calculada en tiempo real.</p>
+                    <div class="flex items-center gap-2 text-xs font-mono">
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-950 border border-emerald-700/50 text-emerald-300">Base: Huayruropata</span>
+                        <span>&rarr;</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-blue-950 border border-blue-700/50 text-blue-300">Izcuchaca (+45m)</span>
+                        <span>&rarr;</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-950 border border-rose-700/50 text-rose-300">Terminal Anta (+63m)</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================= FUNCIONES DE RASTREO Y NOTIFICACIÓN POR CORREO =================
+        function updateEmailDatalist() {
+            const datalist = document.getElementById('emailListDatalist');
+            if (!datalist) return;
+            const emails = Array.from(new Set(fleet.map(f => f.email).filter(Boolean)));
+            datalist.innerHTML = emails.map(e => {
+                const item = fleet.find(f => f.email === e);
+                return `<option value="${e}">Móvil N° ${item ? item.unit : ''} (${item?.driver || 'Chofer'})</option>`;
+            }).join('');
+        }
+
+        function trackVehicleByEmail() {
+            const query = (document.getElementById('gpsTrackEmailInput')?.value || '').toLowerCase().trim();
+            if (!query) {
+                showToast("Ingresa un correo para rastrear", true);
+                return;
+            }
+
+            const found = fleet.find(item => 
+                (item.email || '').toLowerCase().includes(query) ||
+                (item.unit || '').toLowerCase() === query ||
+                (item.driver || '').toLowerCase().includes(query)
+            );
+
+            if (!found) {
+                showToast(`No se encontró ningún móvil con el correo o dato: ${query}`, true);
+                return;
+            }
+
+            locateVehicleOnMapByUnit(found.unit);
+            showToast(`🎯 Móvil N° ${found.unit} (${found.driver || 'Chofer'}) rastreado por correo: ${found.email || query}`);
+        }
+
+        function sendGpsTrackingEmail(unit) {
+            const item = fleet.find(f => f.unit === unit);
+            if (!item) return;
+
+            const now = new Date();
+            const curMin = (now.getHours() * 60) + now.getMinutes() + (now.getSeconds() / 60);
+            const baseMin = parseTimeToMinutes(item.baseTime);
+            const elapsed = curMin - baseMin;
+            const geo = getGpsCoordinatesForElapsed(elapsed);
+
+            let nextStop = "Terminal Anta";
+            if (elapsed < 8) nextStop = "Base 8 Terminal Santiago";
+            else if (elapsed < 20) nextStop = "Arco Poroy";
+            else if (elapsed < 26) nextStop = "Cachimayo";
+            else if (elapsed < 45) nextStop = "Izcuchaca";
+
+            const mapsUrl = `https://www.google.com/maps?q=${geo.lat.toFixed(6)},${geo.lng.toFixed(6)}`;
+            const destinationEmail = item.email || '';
+
+            const subject = encodeURIComponent(`[Rastreo GPS en Vivo] Móvil N° ${item.unit} (${item.plate || 'V-ANTA'}) - Ruta Huayruropata - Anta`);
+            const body = encodeURIComponent(
+                `REPORTE DE RASTREO GPS EN TIEMPO REAL\n` +
+                `====================================\n\n` +
+                `🚐 Móvil N°: ${item.unit}\n` +
+                `🔢 Placa: ${item.plate || 'No registrada'}\n` +
+                `👤 Conductor: ${item.driver || 'No asignado'}\n` +
+                `📧 Correo del Chofer: ${item.email || 'No registrado'}\n\n` +
+                `ESTADO EN RUTA:\n` +
+                `----------------\n` +
+                `📍 Coordenadas GPS: ${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}\n` +
+                `⚡ Velocidad Estimada: ${geo.speed} km/h\n` +
+                `⏱️ Salida Huayruropata: ${formatMinutes(baseMin)}\n` +
+                `🛣️ Próximo Paradero: ${nextStop}\n` +
+                `🚦 Estado: ${geo.status === 'EN_ROUTE' ? 'En Tránsito hacia Anta' : (geo.status === 'WAITING' ? 'En Espera en Base' : 'Llegó a Destino')}\n\n` +
+                `VER UBICACIÓN EN VIVO EN GOOGLE MAPS:\n` +
+                `${mapsUrl}\n\n` +
+                `Reporte generado automáticamente por Sistema Central de Despacho GPS Rural Cusco - Anta.\n` +
+                `Hora del reporte: ${new Date().toLocaleTimeString()} - ${new Date().toLocaleDateString()}`
+            );
+
+            window.open(`mailto:${destinationEmail}?subject=${subject}&body=${body}`, '_blank');
+            showToast(`Abriendo correo para enviar ubicación del Móvil N° ${item.unit}`);
+        }
+
+        function openEmailNotificationModal(preselectedUnit = null) {
+            const modal = document.getElementById('emailTrackingModal');
+            const select = document.getElementById('modalSelectUnit');
+            if (!modal || !select) return;
+
+            select.innerHTML = fleet.map(f => `
+                <option value="${f.unit}">Móvil N° ${f.unit} - ${f.plate || 'S/P'} (${f.driver || 'Chofer'}) ${f.email ? '- ' + f.email : ''}</option>
+            `).join('');
+
+            if (fleet.length === 0) {
+                select.innerHTML = '<option value="">(No hay móviles en la planilla)</option>';
+            } else if (preselectedUnit) {
+                select.value = preselectedUnit;
+            }
+
+            updateEmailModalPreview();
+            modal.classList.remove('hidden');
+        }
+
+        function closeEmailNotificationModal() {
+            const modal = document.getElementById('emailTrackingModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function updateEmailModalPreview() {
+            const select = document.getElementById('modalSelectUnit');
+            const destInput = document.getElementById('modalDestEmail');
+            const previewEl = document.getElementById('modalEmailPreviewText');
+            if (!select || !previewEl) return;
+
+            const unit = select.value;
+            const item = fleet.find(f => f.unit === unit);
+
+            if (!item) {
+                previewEl.textContent = "Selecciona un móvil registrado para generar el reporte de rastreo GPS.";
+                return;
+            }
+
+            if (destInput && (!destInput.value || destInput.value.includes('@'))) {
+                destInput.value = item.email || '';
+            }
+
+            const now = new Date();
+            const curMin = (now.getHours() * 60) + now.getMinutes() + (now.getSeconds() / 60);
+            const baseMin = parseTimeToMinutes(item.baseTime);
+            const elapsed = curMin - baseMin;
+            const geo = getGpsCoordinatesForElapsed(elapsed);
+
+            let nextStop = "Terminal Anta";
+            if (elapsed < 8) nextStop = "Base 8 Terminal Santiago";
+            else if (elapsed < 20) nextStop = "Arco Poroy";
+            else if (elapsed < 26) nextStop = "Cachimayo";
+            else if (elapsed < 45) nextStop = "Izcuchaca";
+
+            const mapsUrl = `https://www.google.com/maps?q=${geo.lat.toFixed(6)},${geo.lng.toFixed(6)}`;
+
+            const text = 
+`REPORTE DE RASTREO GPS SATELITAL - TRANSPORTE PÚBLICO RURAL
+=============================================================
+Ruta: Huayruropata (Cusco) -> Izcuchaca -> Terminal Anta
+
+🚐 Móvil: N° ${item.unit}
+🔢 Placa: ${item.plate || 'Sin placa'}
+👤 Chofer: ${item.driver || 'Por asignar'}
+📧 Correo Chofer: ${item.email || 'No registrado'}
+
+TELEMETRÍA EN VIVO:
+--------------------
+📍 Coordenadas GPS: ${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}
+⚡ Velocidad Actual: ${geo.speed} km/h
+🚦 Estado: ${geo.status === 'EN_ROUTE' ? 'En Ruta hacia Anta' : (geo.status === 'WAITING' ? 'En Espera en Base' : 'Llegó a Destino')}
+⏱️ Hora de Salida Base: ${formatMinutes(baseMin)}
+🛣️ Próximo Paradero: ${nextStop}
+
+ENLACE DE RASTREO EN GOOGLE MAPS:
+${mapsUrl}
+
+Enviado desde Sistema Central de Despacho GPS Rural`;
+
+            previewEl.textContent = text;
+        }
+
+        function submitModalSendEmail() {
+            const select = document.getElementById('modalSelectUnit');
+            const destInput = document.getElementById('modalDestEmail');
+            const previewEl = document.getElementById('modalEmailPreviewText');
+
+            if (!select || !select.value) {
+                showToast("Selecciona un móvil", true);
+                return;
+            }
+
+            const dest = (destInput ? destInput.value : '').trim();
+            const unit = select.value;
+            const subject = encodeURIComponent(`[Rastreo GPS] Móvil N° ${unit} - Ruta Huayruropata a Anta`);
+            const body = encodeURIComponent(previewEl.textContent);
+
+            window.open(`mailto:${dest}?subject=${subject}&body=${body}`, '_blank');
+            showToast(`Abriendo cliente de correo para enviar a: ${dest || 'destinatario'}`);
+            closeEmailNotificationModal();
+        }
+
+        function copyEmailReportToClipboard() {
+            const previewEl = document.getElementById('modalEmailPreviewText');
+            if (!previewEl || !previewEl.textContent) return;
+
+            navigator.clipboard.writeText(previewEl.textContent).then(() => {
+                showToast("¡Reporte GPS y enlace copiados al portapapeles! Listo para enviar por correo.");
+            }).catch(() => {
+                showToast("Copiado al portapapeles");
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateFormatToggleUI();
+            updateCheckpointLabels();
+            setSystemTimeToInput();
+            setBatchStartTimeToNow();
+
+            if (fleet.length === 0) {
+                loadSampleData();
+            } else {
+                renderTable();
+                const nextNum = fleet.length + 1;
+                document.getElementById('quickUnitNum').value = String(nextNum).padStart(2, '0');
+                document.getElementById('unitInput').value = String(nextNum).padStart(2, '0');
+            }
+
+            // High-frequency live clock update
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+
+            // Iniciar radar y mapa GPS
+            initGpsMap();
+            setInterval(updateGpsVehicles, 2000);
+
+            // Re-evaluate live vehicle route positions periodically
+            setInterval(renderTable, 10000);
+        });
+    </script>
+</body>
+</html>
